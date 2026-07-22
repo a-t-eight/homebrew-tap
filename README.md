@@ -1,4 +1,4 @@
-# a-t-eight Homebrew Tap
+# a-t-eight Homebrew tap
 
 ## Install
 
