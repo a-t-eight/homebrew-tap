@@ -16,6 +16,8 @@ brew install a-t-eight/tap/lua@5.1
 
 ```sh
 brew install --cask a-t-eight/tap/xquartz@rc
+brew install --cask a-t-eight/tap/chatgpt-classic@1.2026.119
+brew install --cask a-t-eight/tap/chatgpt-classic@1.2026.160
 ```
 
 ## Documentation
