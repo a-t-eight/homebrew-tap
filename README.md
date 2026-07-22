@@ -1,4 +1,4 @@
-# A-t-eight Tap
+# a-t-eight homebrew-tap
 
 ## How do I install these formulae?
 
