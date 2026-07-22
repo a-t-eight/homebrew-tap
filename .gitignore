@@ -1,0 +1,28 @@
+# macOS metadata
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+.TemporaryItems
+
+# Editor / IDE local state
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Homebrew local/test output
+logs/
+home/
+*.bottle.json
+*.tar.gz
+
+# Local env/secrets
+.env
+.env.*
+!.env.example
