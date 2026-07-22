@@ -12,8 +12,6 @@ class LuaAT51 < Formula
     skip "Lua 5.1 is maintained as a legacy compatibility formula"
   end
 
-  uses_from_macos "unzip"
-
   on_macos do
     # Be sure to build a dylib, or else runtime modules will pull in another static copy of liblua = crashy
     # See: https://github.com/Homebrew/homebrew/pull/5043
