@@ -10,8 +10,13 @@ cask "xquartz@rc" do
 
   livecheck do
     url "https://www.xquartz.org/releases/sparkle-r1/rc.xml"
-    strategy :sparkle do |item|
-      item.short_version.delete_prefix("XQuartz-")
+    strategy :sparkle do |items|
+      items.filter_map do |item|
+        version = item.short_version&.delete_prefix("XQuartz-")
+        next if version.nil?
+
+        version if version.match?(/\A\d+(?:\.\d+)+_rc\d+\z/i)
+      end
     end
   end
 
