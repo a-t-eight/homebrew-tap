@@ -1,18 +1,23 @@
-# a-t-eight homebrew-tap
+# a-t-eight Homebrew Tap
 
-## How do I install these formulae?
+## Install
 
-`brew install a-t-eight/tap/<formula>`
+```sh
+brew tap a-t-eight/tap
+```
 
-Or `brew tap a-t-eight/tap` and then `brew install <formula>`.
+## Formulae
 
-Or, in a `brew bundle` `Brewfile`:
+```sh
+brew install a-t-eight/tap/lua@5.1
+```
 
-```ruby
-tap "a-t-eight/tap"
-brew "<formula>"
+## Casks
+
+```sh
+brew install --cask a-t-eight/tap/xquartz@rc
 ```
 
 ## Documentation
 
-`brew help`, `man brew` or check [Homebrew's documentation](https://docs.brew.sh).
+`brew help`, `man brew`, or check [Homebrew's documentation](https://docs.brew.sh).
