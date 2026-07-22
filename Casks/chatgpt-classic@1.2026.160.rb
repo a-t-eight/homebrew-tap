@@ -19,7 +19,7 @@ cask "chatgpt-classic@1.2026.160" do
   depends_on macos: :sonoma
   depends_on arch: :arm64
 
-  app "ChatGPT.app"
+  app "ChatGPT.app", target: "ChatGPT Classic.app"
 
   uninstall quit: "com.openai.chat"
 
