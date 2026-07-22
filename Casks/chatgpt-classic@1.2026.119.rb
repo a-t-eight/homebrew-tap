@@ -13,7 +13,6 @@ cask "chatgpt-classic@1.2026.119" do
   end
 
   conflicts_with cask: [
-    "chatgpt",
     "chatgpt-classic",
     "chatgpt-classic@1.2026.160",
   ]
