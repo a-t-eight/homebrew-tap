@@ -9,7 +9,7 @@ cask "chatgpt-classic@1.2026.160" do
   homepage "https://chatgpt.com/"
 
   livecheck do
-    skip "Pinned ChatGPT Classic test build"
+    skip "Pinned ChatGPT Classic - lastest good build before model-selection regressions"
   end
 
   conflicts_with cask: [
