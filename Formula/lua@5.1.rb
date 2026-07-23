@@ -19,8 +19,8 @@ class LuaAT51 < Formula
   end
 
   on_linux do
+    depends_on "gpatch" => :build
     depends_on "readline"
-
     # Add shared library for linux
     # Equivalent to the mac patch carried around here ... that will probably never get upstreamed
     patch do
