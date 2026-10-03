@@ -1,0 +1,55 @@
+name: DisplayCAL cask
+
+on:
+  pull_request:
+    paths:
+      - Casks/displaycal-py3.rb
+      - scripts/*displaycal*
+      - tests/test_update_displaycal.py
+      - .github/workflows/displaycal.yml
+      - .github/workflows/update-displaycal.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: macos-15
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+      HOMEBREW_NO_ANALYTICS: "1"
+      HOMEBREW_NO_INSTALL_CLEANUP: "1"
+      HOMEBREW_NO_AUTOREMOVE: "1"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - name: Test updater and validate cask
+        run: |
+          python3 -m unittest discover -s tests -v
+          brew style Casks/displaycal-py3.rb
+          brew tap --custom-remote a-t-eight/tap "$GITHUB_WORKSPACE"
+          cp Casks/displaycal-py3.rb "$(brew --repository a-t-eight/tap)/Casks/displaycal-py3.rb"
+          brew audit --cask a-t-eight/tap/displaycal-py3
+      - name: Verify pinned release downloads and suite layout
+        run: |
+          python3 scripts/update_displaycal.py --verify-current
+          git diff --exit-code -- Casks/displaycal-py3.rb
+          bash scripts/verify_displaycal.sh work/displaycal
+      - name: Retain validation and signing results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: displaycal-cask-validation
+          path: |
+            work/displaycal/*.md
+            work/displaycal/*.json
+            work/displaycal/*.log
+          if-no-files-found: ignore
+          retention-days: 30
