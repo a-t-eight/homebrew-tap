@@ -21,6 +21,8 @@ logs/
 home/
 *.bottle.json
 *.tar.gz
+__pycache__/
+work/
 
 # Local env/secrets
 .env
