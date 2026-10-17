@@ -1,0 +1,131 @@
+name: idevice_pair cask
+
+on:
+  pull_request:
+    paths:
+      - Casks/idevice-pair.rb
+      - scripts/update_idevice_pair.py
+      - tests/test_update_idevice_pair.py
+      - .github/workflows/idevice-pair.yml
+  push:
+    branches: [main]
+    paths:
+      - Casks/idevice-pair.rb
+      - scripts/update_idevice_pair.py
+      - tests/test_update_idevice_pair.py
+      - .github/workflows/idevice-pair.yml
+  schedule:
+    # Alternate Mondays, gated below; first eligible date: 2026-10-19 UTC.
+    - cron: "37 1 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: idevice-pair-${{ github.event_name == 'pull_request' && github.ref || 'maintenance' }}
+  cancel-in-progress: false
+
+env:
+  HOMEBREW_NO_AUTO_UPDATE: "1"
+  HOMEBREW_NO_ANALYTICS: "1"
+  HOMEBREW_NO_INSTALL_CLEANUP: "1"
+  HOMEBREW_NO_AUTOREMOVE: "1"
+
+jobs:
+  cadence:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      due: ${{ steps.check.outputs.due }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - id: check
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            echo "due=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "due=$(python3 scripts/update_idevice_pair.py --due)" >> "$GITHUB_OUTPUT"
+          fi
+
+  validate:
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    runs-on: macos-15
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+      - name: Test updater safeguards
+        run: python3 -m unittest discover -s tests -p test_update_idevice_pair.py -v
+      - name: Validate pinned download, app bundle, signing and notarization
+        run: python3 scripts/update_idevice_pair.py --verify-current
+      - name: Check Homebrew definition
+        run: |
+          brew style Casks/idevice-pair.rb
+          brew tap --custom-remote a-t-eight/tap "$GITHUB_WORKSPACE"
+          cp Casks/idevice-pair.rb "$(brew --repository a-t-eight/tap)/Casks/idevice-pair.rb"
+          brew audit --cask --strict a-t-eight/tap/idevice-pair
+
+  update:
+    needs: cadence
+    if: needs.cadence.outputs.due == 'true'
+    runs-on: macos-15
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+      - name: Test updater safeguards
+        run: python3 -m unittest discover -s tests -p test_update_idevice_pair.py -v
+      - name: Prepare and validate newer stable release
+        id: update
+        run: python3 scripts/update_idevice_pair.py
+      - name: Check proposed Homebrew definition
+        if: steps.update.outputs.updated == 'true'
+        run: |
+          brew style Casks/idevice-pair.rb
+          brew tap --custom-remote a-t-eight/tap "$GITHUB_WORKSPACE"
+          cp Casks/idevice-pair.rb "$(brew --repository a-t-eight/tap)/Casks/idevice-pair.rb"
+          brew audit --cask --strict a-t-eight/tap/idevice-pair
+      - name: Open or update release PR
+        if: steps.update.outputs.updated == 'true'
+        uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
+        with:
+          token: ${{ github.token }}
+          branch: automation/idevice-pair
+          commit-message: "idevice-pair: update to ${{ steps.update.outputs.version }}"
+          title: "idevice-pair: update to ${{ steps.update.outputs.version }}"
+          body: |
+            Update idevice_pair to [${{ steps.update.outputs.version }}](https://github.com/jkcoxson/idevice_pair/releases/tag/v${{ steps.update.outputs.version }}).
+
+            Validated the DMG checksum against the GitHub release digest, bundle identity and version,
+            Apple Silicon and Intel slices, code signature, Gatekeeper, Homebrew style and strict audit.
+
+            Device pairing and GUI operation are not exercised. Manual merge required.
+          add-paths: Casks/idevice-pair.rb
+      - name: Retain validation evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: idevice-pair-update-validation
+          path: work/idevice-pair/validation.json
+          if-no-files-found: ignore
+          retention-days: 30
